@@ -44,11 +44,10 @@ classdef spatial_gab < bt.model.template_spatial
 %             self.initial_step_size = [0.4    0.4     0.5     0.5    0.4    0.4    0.1     0.3      5     40    0.005  0.05];
 % 		   	self.limits =            [eps    -20     eps     eps    -20    eps    eps     eps     10    100    0.075     0 ;...
 %                                       20    -eps      20      20   -eps    40     10      20    100    800     0.14     1 ];
-            
-            p = model.params();
-            self.initial_step_size = [self.initial_step_size  0.1  0.1  0.05  0.05   0.1  0.1  0.05  0.05   0.2  0.2  0.05  0.05   0.001  0.001  0.05  0.05]; 
-            self.limits =            [self.limits             [-4   -4     0     0    -4   -4     0     0   -10  -10     0     0   -0.03  -0.03     0     0 ;...
-                                                                4    4  p.Lx  p.Ly     4    4  p.Lx  p.Ly    10   10  p.Lx  p.Ly    0.03   0.03  p.Lx  p.Ly]];             
+%             p = model.params();
+%             self.initial_step_size = [self.initial_step_size  0.1  0.1  0.05  0.05   0.1  0.1  0.05  0.05   0.2  0.2  0.05  0.05   0.001  0.001  0.05  0.05]; 
+%             self.limits =            [self.limits             [-4   -4     0     0    -4   -4     0     0   -10  -10     0     0   -0.03  -0.03     0     0 ;...
+%                                                                 4    4  p.Lx  p.Ly     4    4  p.Lx  p.Ly    10   10  p.Lx  p.Ly    0.03   0.03  p.Lx  p.Ly]];             
                                                             
             self.n_params = length(self.param_names);                                
 			self.n_fitted = self.n_params;
@@ -109,11 +108,10 @@ classdef spatial_gab < bt.model.template_spatial
             
             %Convert the EEGLAB polar coordinates to X and Y coordinates
             %for details see electrode_positions function
-            dscale = 0.25;
-            theta = 90-[EEG.chanlocs.theta];
+            theta = 90-[EEG.chanlocs.theta]; % Because in the model framework, y=0 is the front
             radius = [EEG.chanlocs.radius];         
-            self.output_x = (self.p.Lx/2 + dscale*radius.*cosd(theta))';
-            self.output_y = (self.p.Ly/2 - dscale*radius.*sind(theta))';
+            self.output_x = self.p.Lx/2 * (1 + radius.*cosd(theta))';
+            self.output_y = self.p.Ly/2 * (1 - radius.*sind(theta))';
             
         end
         
