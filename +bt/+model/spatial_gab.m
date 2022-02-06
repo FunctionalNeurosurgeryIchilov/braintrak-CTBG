@@ -13,17 +13,17 @@ classdef spatial_gab < bt.model.template_spatial
 			self.name = 'spatial_gab';
 			
             self.param_names = {'Gee','Gei','Ges','Gse','Gsr','Gsn','Gre','Grs','Alpha','Beta','t0','EMGa',...
-                                'Gee_amp','Gei_amp','Gsn_amp','t0_amp'};                              
+                                'Gee_amp','Gei_amp','Gsn_amp','t0_amp','Alpha_amp','Beta_amp'};                              
 			self.param_symbols = {'G_{ee}','G_{ei}','G_{es}','G_{se}','G_{sr}','G_{sn}','G_{re}','G_{rs}','\alpha','\beta','t_0','A_{EMG}',...
-                                'Gee_{amp}','Gei_{amp}','Gsn_{amp}','t_{0amp}'};                             
+                                'Gee_{amp}','Gei_{amp}','Gsn_{amp}','t_{0amp}','Alpha_{amp}','Beta_{amp}'};                             
 			self.param_units = {'','','','','','','','','s^{-1}','s^{-1}','ms','',...
-                                '','','','ms'};                            
+                                '','','','ms','s^{-1}','s^{-1}'};                            
             self.initial_step_size = [0.4    0.4     0.5     0.5    0.4    0.4    0.1     0.3      5     40    0.005  0.05];
 		   	self.limits =            [eps    -20     eps     eps    -20    eps    eps     eps     10    100    0.075     0 ;...
                                       20    -eps      20      20   -eps    40     10      20    100    800     0.14     1 ];
-            self.initial_step_size = [self.initial_step_size  0.1  0.1  0.2  0.001]; 
-            self.limits =            [self.limits             [-4   -4  -10  -0.03;...
-                                                                4    4   10   0.03]];                                                                    
+            self.initial_step_size = [self.initial_step_size  0.1  0.1  0.2  0.001 0.5  3]; 
+            self.limits =            [self.limits             [-4   -4  -10  -0.03 -40 -300;...
+                                                                4    4   10   0.03  40  300]];                                                                    
 
 %             %EPILEPSY (2d_phased variation)
 %             self.param_names = {'Gee','Gei','Ges','Gse','Gsr','Gsn','Gre','Grs','Alpha','Beta','t0','EMGa',...
@@ -78,6 +78,8 @@ classdef spatial_gab < bt.model.template_spatial
             self.p.apply_variation('g_ei','costume_doc',pars(14));
             self.p.apply_variation('g_sn','costume_doc',pars(15));
             self.p.apply_variation('t0','costume_doc',pars(16));
+            self.p.apply_variation('alpha','costume_doc',pars(17));
+            self.p.apply_variation('beta','costume_doc',pars(18));
 
 %             %2d_phased variation
 %             self.p.apply_variation('g_ee','costume_doc_2d_phased',pars(13),pars(14),pars(15),pars(16));
@@ -87,7 +89,7 @@ classdef spatial_gab < bt.model.template_spatial
         end
 		
 		function [initial_values,prior_pp] = initialize_fit(self,target_f,target_P) % Return the first posterior/prior and initial values
-            initial_vals_variation = [0 0 0 0];
+            initial_vals_variation = [0 0 0 0 0 0];
 %             initial_vals_variation = zeros(1,16); %2d_phased variation
 			[f1,P1,idx,db_data,min_chisq] = db_fit.quick_fit(self,target_f,mean(target_P,2)); % Fit the first (or only) spectrum given
 			p = model.params(db_data.iswake(idx));
