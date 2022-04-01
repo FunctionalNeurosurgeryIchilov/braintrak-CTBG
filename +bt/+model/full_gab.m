@@ -39,7 +39,7 @@ classdef full_gab < bt.model.template
 			self.n_fitted = 11;
 			self.skip_fit = zeros(1,self.n_fitted);
 
-			self.initial_step_size = [0.4  0.4   0.5   0.5    0.4  0.1   0.3      5     40    0.005  0.05]/10;
+			self.initial_step_size = [0.4  0.4   0.5   0.5    0.4  0.1   0.3      5     40    0.005  0.05];
 		   	self.limits =            [ 0   -20     0     0    -20    0     0     10    100    0.075     0 ;...
                                       20     0    20    20      0   10    20    100    800     0.14     1 ];
 			

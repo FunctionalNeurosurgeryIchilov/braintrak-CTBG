@@ -48,9 +48,11 @@ function [out,final_posterior,accept_ratio] = chain(model,initial_values,n_point
 
 	fixed_cov = diag(0.05*model.initial_step_size);
 	lambda = (2.38)^2/model.n_fitted;
-    lambda = lambda/40;
-%     if length(model.electrodes) > 1 %spatial fit
-% 	    lambda = lambda/40;
+    if length(model.electrodes) > 1 %spatial fit
+	    lambda = lambda/40;
+    else
+        lambda = lambda/400;
+    end
 	
 	target_accept = 0.238;
 	alpha = NaN;
