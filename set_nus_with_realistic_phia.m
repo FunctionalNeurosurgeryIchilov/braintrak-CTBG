@@ -9,7 +9,15 @@
 %
 function [params, is_realistic] = set_nus_with_realistic_phia(params,typical_phia,prints_flg)
 
-    realistic_phia = [eps eps eps; typical_phia; max([20 40 20;typical_phia*2])]; %[min typical max] values are based on the literature
+    max_phia_literature = [20 40 20]; %values are based on the literature
+    if nargin<3
+        prints_flg = 0;
+    end
+    if nargin<2 
+        typical_phia = max_phia_literature;
+    end
+    lim_phia = [eps eps eps; max([max_phia_literature;typical_phia*2])];
+    
     is_realistic = true;
     
     if isempty(params.phia)
@@ -19,8 +27,8 @@ function [params, is_realistic] = set_nus_with_realistic_phia(params,typical_phi
     end
         
     for iPhia = 1:size(params.phia,1)
-        err(iPhia) = sum((params.phia(iPhia,:)-realistic_phia(2,:)).^2);
-        if any(params.phia(iPhia,:)<realistic_phia(1,:)) || any(params.phia(iPhia,:)>realistic_phia(3,:))
+        err(iPhia) = sum((params.phia(iPhia,:)-typical_phia).^2);
+        if any(params.phia(iPhia,:)<lim_phia(1,:)) || any(params.phia(iPhia,:)>lim_phia(2,:))
             err(iPhia) = inf;
         end
     end
