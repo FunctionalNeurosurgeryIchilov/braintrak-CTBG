@@ -20,6 +20,9 @@ classdef (Abstract) template < matlab.mixin.Copyable
 		weights
 		prior_pp % Shape of the prior distribution (a struct array, one for each parameter)
 		prior_size = 50; % Number of points in the prior
+
+        freqBandHz = [1 Inf];
+        weigths1f_flg = true;
 	end
 
    	methods(Abstract)
@@ -78,10 +81,18 @@ classdef (Abstract) template < matlab.mixin.Copyable
 			end
 		end
 
-		function w = get_weights(self,target_f) % Default weighting function
-			w = ones(size(target_f));
-			w = target_f.^-1; % Decades equally weighted
-			w(target_f < 1) = 0; % Ignore frequencies below 1Hz 
+        function set_weights_freq(self,freqBandHz,weigths1f_flg)
+            self.freqBandHz = [max(self.freqBandHz(1),freqBandHz(1))  min(self.freqBandHz(2),freqBandHz(2))];
+            self.weigths1f_flg = weigths1f_flg;
+        end
+
+        function w = get_weights(self,target_f) % Default weighting function
+            if self.weigths1f_flg
+			    w = target_f.^-1; % Decades equally weighted
+            else
+                w = ones(size(target_f));
+            end
+            w(target_f < self.freqBandHz(1) | target_f > self.freqBandHz(2)) = 0; 
 			w = w(:);
 		end
 
