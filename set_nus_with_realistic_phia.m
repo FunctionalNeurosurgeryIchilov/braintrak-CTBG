@@ -14,9 +14,9 @@ function [params, is_realistic] = set_nus_with_realistic_phia(params,typical_phi
         prints_flg = 0;
     end
     if nargin<2 
-        typical_phia = max_phia_literature;
+        typical_phia = max_phia_literature/2;
     end
-    lim_phia = [eps eps eps; max([max_phia_literature;typical_phia*2])];
+    lim_phia = [eps eps eps; max([max_phia_literature*1.5;typical_phia*2])];
     
     is_realistic = true;
     
