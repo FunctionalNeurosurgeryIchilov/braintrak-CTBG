@@ -82,6 +82,7 @@ function [f_out,fit_data,plot_data] = fit_spectrum(model,target_f,target_P,prior
 	fit_data.chain_length = length(posterior_out);
 	[~,b] = max(posterior_out);
 	fit_data.fitted_params = out(b,:);
+    fit_data.fitted_params_zscore = abs(out(b,:)-mean(out,1))./std(out,0,1);
 	fit_data.fitted_posterior = posterior_out(b);
 	fit_data.posterior_pp = model.make_posterior(out);
 	fit_data.xyz_posterior = model.xyz_posterior(out);
