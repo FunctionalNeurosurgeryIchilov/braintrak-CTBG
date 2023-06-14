@@ -126,7 +126,64 @@ classdef full_gab < bt.model.template
 		    P = self.normalization_target*P;
 		    sqdiff = (abs(P-self.target_P)./self.target_P).^2; % This is the squared fractional difference
 		    chisq = sum(sqdiff(:).*self.weights(:));
-		end
+        end
+
+        function [chisq,P] = objective_with_spectrum(self,pars,target_f) % Calculate the objective
+			
+            P = [];
+			chisq = NaN;
+            
+            p=self.p;
+            self.target_f = target_f(:);
+            self.target_P = ones(size(self.target_f));
+            self.set_cache(pars);      
+            self.normalization_target = 1;
+
+            pars = self.fullgab2full_params(pars);
+            
+		    if self.compute_Mtot % If this flag has been set to false, then these fields are already present
+		        % Should be fine to let that just throw an undefined variable error later if this isn't the case
+		       self.stab_Mtot = exp(1i*self.stab_w*pars(8));
+		       self.spec_Mtot = exp(1i*self.spec_w*pars(8));
+		    end
+
+			stab_L = 1./((1-1i*self.stab_w/pars(6)).*(1-1i*self.stab_w/pars(7)));
+		    spec_L = 1./((1-1i*self.spec_w/pars(6)).*(1-1i*self.spec_w/pars(7)));
+
+		    stab_gamma_prefactor = self.stab_gamma_prefactor;
+		    d=(stab_gamma_prefactor.*(1-stab_L.*pars(2))-stab_L.*pars(1)).*(1-stab_L.*stab_L.*pars(5))-stab_L.*stab_L.*self.stab_Mtot.*(pars(3) + stab_L.*pars(4));      
+
+		    stab=d(1)>0 && ~any(real(d(2:end))<0 & imag(d(2:end)).*imag(d(1:end-1))<0);
+
+		    if ~stab
+		    	return
+		    end
+
+		    % And the spectrum
+		    Jei_oneminus = 1-spec_L.*pars(2);
+		    Jsrs_oneminus = 1-spec_L.*spec_L.*pars(5);
+
+		    re2 = self.p.re.^2;
+
+		    q2re2 = (self.spec_gamma_prefactor - 1./(Jei_oneminus).*(spec_L.*pars(1) + ((spec_L.*spec_L.*pars(3) + spec_L.*spec_L.*spec_L.*pars(4)).*self.spec_Mtot)./(Jsrs_oneminus)));
+		    T_prefactor = spec_L.*spec_L.*self.p.phin./(Jei_oneminus.*Jsrs_oneminus);
+		    % T prefactor doesn't have a exp(i*omega*t0/2) term because the modulus of this is 1
+		    P = zeros(size(self.spec_w));
+
+		    k2u = self.k2u;
+		    k2_volconduct = self.k2_volconduct;
+
+		    for j = 1:size(k2u,1)
+		        P = P + k2u(j,2).*abs(T_prefactor./(k2u(j,1)*re2+q2re2)).^2 * k2_volconduct(j); % For use with the efficient way
+		    end
+
+		    P = P + 1e-12*pars(9)*self.emg; % Add the EMG component
+		    
+		    P = P./utils.mex_trapz(self.target_f(self.weights>0),P(self.weights>0));
+		    P = self.normalization_target*P;
+		    sqdiff = (abs(P-self.target_P)./self.target_P).^2; % This is the squared fractional difference
+		    chisq = sum(sqdiff(:).*self.weights(:));
+        end
 		
 		function [initial_values,prior_pp] = initialize_fit(self,target_f,target_P) % Return the first posterior/prior and initial values
             [f1,P1,idx,db_data,min_chisq] = db_fit.quick_fit(self,target_f,target_P);
