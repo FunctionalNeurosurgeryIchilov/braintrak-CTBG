@@ -17,6 +17,7 @@ classdef (Abstract) template < matlab.mixin.Copyable
 	
 		target_f % Frequencies present in the data 
 		target_P % Experimental power spectrum
+		target_P_lfp
 		weights
 		prior_pp % Shape of the prior distribution (a struct array, one for each parameter)
 		prior_size = 50; % Number of points in the prior
@@ -43,6 +44,7 @@ classdef (Abstract) template < matlab.mixin.Copyable
 			end
 			self.target_f = target_f(:);
 			self.target_P = ones(size(self.target_f))./(target_f(2)-target_f(1));
+			self.target_P_lfp = ones(size(self.target_f))./(target_f(2)-target_f(1));
 			self.set_cache(pars);
 			[chisq,P] = self.objective(pars);
 			stab = isfinite(chisq);
@@ -80,6 +82,10 @@ classdef (Abstract) template < matlab.mixin.Copyable
 				error('Weighting will only work with nonzero frequencies');
 			end
 		end
+
+        function set_P_lfp(self,target_P_lfp)
+            self.target_P_lfp = target_P_lfp;
+        end
 
         function set_weights_freq(self,freqBandHz,weigths1f_flg)
             self.freqBandHz = [max(self.freqBandHz(1),freqBandHz(1))  min(self.freqBandHz(2),freqBandHz(2))];

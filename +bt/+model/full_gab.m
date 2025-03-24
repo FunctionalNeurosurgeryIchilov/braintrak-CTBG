@@ -19,6 +19,7 @@ classdef full_gab < bt.model.template
 		p
 		emg
 		normalization_target
+		normalization_target_lfp
 		stab_Mtot
 		spec_Mtot
 		compute_Mtot
@@ -71,8 +72,10 @@ classdef full_gab < bt.model.template
 			valid = ~(pars(1)/pars(2) > -0.5 || (pars(1) + pars(2)) > 1 || pars(9)/pars(8) > 20 || any(pars >= self.limits(2,:) | pars <= self.limits(1,:)) );
 		end
 
-		function [chisq,P] = objective(self,pars) % Calculate the objective
+		function [chisq,P, chisq_eeg,chisq_lfp,P_lfp] = objective(self,pars) % Calculate the objective
 			
+            is_fit_phi_lfp = true;
+
             P = [];
 			chisq = NaN;
             
@@ -126,9 +129,38 @@ classdef full_gab < bt.model.template
 		    P = self.normalization_target*P;
 		    sqdiff = (abs(P-self.target_P)./self.target_P).^2; % This is the squared fractional difference
 		    chisq = sum(sqdiff(:).*self.weights(:));
+
+            %%%
+            if is_fit_phi_lfp
+                T_prefactor = (1-spec_L.*pars(1)-spec_L.*pars(2)).*spec_L.*self.p.phin./(Jei_oneminus.*Jsrs_oneminus); %does not include stimulation phiw
+                P_lfp = zeros(size(self.spec_w));
+
+%     			Lx = 0.02; % linear dimensions of the STN/ANT
+%     			dk = 2*pi/Lx;
+%     			m_rows = -self.kmax:self.kmax;
+%     			n_cols = -self.kmax:self.kmax;
+%     			[kxa,kya] = meshgrid(dk*m_rows,dk*n_cols);
+%     			k2 = kxa.^2+kya.^2;
+%     			k2u = unique(k2(:));
+%     			k2u = [k2u histc(k2(:),k2u)];
+                k2u = [0,1];
+
+                for j = 1:size(k2u,1)
+    		        P_lfp = P_lfp + k2u(j,2).*abs(T_prefactor./(k2u(j,1)*re2+q2re2)).^2;
+    		    end
+
+    		    P_lfp = P_lfp./utils.mex_trapz(self.target_f(self.weights>0),P_lfp(self.weights>0));
+    		    P_lfp = self.normalization_target_lfp*P_lfp;
+    		    sqdiff_lfp = (abs(P_lfp-self.target_P_lfp)./self.target_P_lfp).^2;
+                chisq_lfp = sum(sqdiff_lfp(:).*self.weights(:));
+                chisq_eeg = chisq;
+                chisq = chisq_eeg + chisq_lfp;
+            end
+            %%%
+
         end
 
-        function [chisq,P] = objective_with_spectrum(self,pars,target_f) % Calculate the objective
+        function [chisq,P] = objective_with_spectrum_DEBUG(self,pars,target_f) % Calculate the objective
 			
             P = [];
 			chisq = NaN;
@@ -136,8 +168,10 @@ classdef full_gab < bt.model.template
             p=self.p;
             self.target_f = target_f(:);
             self.target_P = ones(size(self.target_f));
+            self.target_P_lfp = ones(size(self.target_f));
             self.set_cache(pars);      
             self.normalization_target = 1;
+            self.normalization_target_lfp = 1;
 
             pars = self.fullgab2full_params(pars);
             
@@ -227,6 +261,9 @@ classdef full_gab < bt.model.template
 			if ~isempty(self.target_P)
 				% If this cache file is being generated for a specific fit instance
 				self.normalization_target = utils.mex_trapz(self.target_f(self.weights>0),self.target_P(self.weights>0));
+            end
+			if ~isempty(self.target_P_lfp)
+				self.normalization_target_lfp = utils.mex_trapz(self.target_f(self.weights>0),self.target_P_lfp(self.weights>0));
 			end
 
 
