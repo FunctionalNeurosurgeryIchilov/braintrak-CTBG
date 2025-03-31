@@ -66,6 +66,7 @@ function p_smoothed = head_imager(varargin)
 
 	x = x(valid);
 	y = y(valid);
+    label = label(valid);
 
 	P = reshape_validate(P,valid,explorer_mode);
 	
